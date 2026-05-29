@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<!--
+select 태그를 사용하면 콤보박스(combobox)를 생성할 수 있습니다. 
+콤보박스에 항목 하나를 추가할 때는 option 태그를 사용하고, 
+항목들을 그룹으로 묶고 싶다면 optgroup 태그를 사용합니다.
+
+<select>
+  <optgroup label="그룹 이름">
+    <option value="서버에 전송할 값">웹 브라우저에 표시할 값</option>
+  </optgroup>
+</select>
+
+option 태그는 서버에 전송할 값을 value 속성으로 지정할 수 있는데, 
+속성을 생략하면 option 태그의 콘텐츠로 적은 텍스트가 값으로 전송됩니다. 
+optgroup 태그로 항목들을 그룹 지을 때 반드시 label 속성으로 그룹명을 지정해야 합니다.
+
+size 속성은 콤보박스에서 화면에 노출되는 항목 갯수를 지정하는 속성입니다. 
+속성값으로 숫자를 적으면 되고, 생략할 경우 기본으로 1개 항목이 표시됩니다. 
+다음처럼 size 속성값을 3으로 지정하면 화면에 항목 3개를 표시합니다.
+
+● multiple 속성
+select 태그로 생성하는 콤보박스는 기본으로 1개 항목만 선택할 수 있습니다. 
+그러나 multiple 속성을 사용하면 여러 항목을 동시에 선택할 수 있습니다. 
+콤보박스에서 항목 하나를 선택한 상태로 Ctrl (맥OS는 cmd)을 누르고 다른 항목을 클릭하면 됩니다.
+
+● selected 속성
+콤보박스는 첫 번째 option 태그의 값이 기본 선택된 상태로 표시되는데, 
+selected 속성을 사용하면 기본 선택 항목을 변경할 수 있습니다.
+여러 개의 option 태그에 selected 속성을 사용하면 selected 속성이 마지막으로 사용된 
+option 태그가 기본값으로 선택되어 표시됩니다.
+-->
+<body>
+    <form action="#" method="get">
+        <fieldset>
+            <legend>개인 정보 입력</legend>
+            <select name="city" id="city" size="7" multiple>
+                <optgroup label="gugugu">
+                    <option value="강북구">강북구</option>
+                    <option value="강남구">강남구</option>
+                    <option value="서초구">서초구</option>
+                    <option value="중원구" selected>중원구</option>
+                    <option value="분당구">분당구</option>
+                </optgroup>
+                <optgroup label="style">
+                    <option value="강북스타일">강북스타일</option>
+                    <option value="강남스타일">강남스타일</option>
+                    <option value="서초스타일">서초스타일</option>
+                    <option value="중원스타일">중원스타일</option>
+                    <option value="분당스타일">분당스타일</option>
+                </optgroup>
+            </select>
+        </fieldset>
+    </form>
+</body>
+</html>

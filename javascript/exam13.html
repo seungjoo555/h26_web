@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <label for="selectBox">가좋 과일</label>
+    <select id="selectBox">
+        <option value="사과">사과</option>
+        <option value="바나나">바나나</option>
+        <option value="망고">망고</option>
+    </select>
+    <hr>
+    <div id="result"></div>
+    <script>
+        let selectBox = document.getElementById("selectBox");
+        let resultDiv = document.getElementById("result");
+
+        selectBox.addEventListener("change", function(){
+            let select = selectBox.options[selectBox.selectedIndex].value;
+            resultDiv.innerText = "좋아하는 과일은: " + select;
+        })
+    </script>
+</body>
+</html>

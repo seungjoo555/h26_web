@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <img id="followMouse" src="../image/crazy_dog.jpg">
+    <hr>
+    <img id="rotateImage" src="../image/mad_dog.jpg">
+    <script>
+        let deg = 0;
+        let image = document.getElementById("rotateImage");
+        let image2 = document.getElementById("followMouse");
+        image.onclick = rotate;     //핸들러 함수에서 괄호 생략
+
+        function rotate() {
+            deg = deg + 90;
+            image.style.transform = "rotate(" + deg + "deg)";
+        }
+        document.onmousemove = updateImage;
+
+        function updateImage(event) {
+            const X = event.clientX;
+            const Y = event.clientY;
+            image2.style.transform = `translate(${X}px, ${Y}px)`;
+        }
+        
+        // image.onmouseover = function(){
+        //     image.style.transform = "scale(0,0)";
+        // }
+        // image.onmouseout = function(){
+        //     image.style.transform = "scale(1,1)";
+        // }
+        
+        // image.addEventListener("mouseover", gone);
+        // image.addEventListener("mouseout", back);
+
+
+    </script>
+</body>
+</html>

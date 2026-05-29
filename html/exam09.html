@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <form action="#" method="get">
+        <!-- 암묵적인 방법은 label 태그에 상호작용 요소를 포함하는 방법 -->
+        <div class="label01">
+            <label>
+                아이디
+                <input type="text">
+            </label>
+        </div>
+
+        <!-- 명시적인 방법은 label 태그의 for 속성과 상호작용 요소의 id 속성을 같은 값으로 설정하는 방법 -->
+        <div class="label02">
+            <label for="userpw">비밀번호</label>
+            <input type="password" id="userpw">
+        </div>
+
+        <!-- 예외적으로 다음처럼 암묵적인 방법과 명시적인 방법을 함께 사용 -->
+        <div class="label03">
+            <label for="username">
+                <input type="text" id="username">이름
+            </label>  
+        </div>
+    </form>
+</body>
+</html>

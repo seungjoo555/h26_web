@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script>
+        class Person {
+            // #name 선언해서 은닉성 추가. 메서드로만 접근가능
+            #name
+            constructor(name, age) {
+                this.#name = name
+                this.age = age
+            }
+            getName() {
+                return this.#name
+            }
+            info() {
+                document.write(`name : ${this.#name} age : ${this.age}<br>`)
+            }
+        }
+        
+
+        let p1 = new Person('홍길동', 25)
+        let p2 = new Person('고길동', 30)
+        let p3 = new Person()
+        p1.info()
+        p2.info()
+        p3.info()
+        document.write(`이름은 ${p1.name}입니다<br>`) // 은닉성 추가돼서 접근 불가
+        document.write(`이름은 ${p1.getName()}입니다`) // 이렇게 접근 가능
+    </script>
+</head>
+<body>
+    
+</body>
+</html>

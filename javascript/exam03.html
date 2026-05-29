@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script>
+        // 함수 선언 후 호출
+        function sayhello(name) {
+            return `안녕하세요 ${name}님`
+        }
+
+        // 함수 표현식. 변수에 함수 답기
+        const add = function (a,b){
+            return a+b
+        }
+
+        // 화살표 함수. lambda같이 활용가능 {}써도됨 근데 return써야됨
+        const mul = (a,b) => a*b
+
+        function change() {
+            const id_alter = document.getElementById("alter") // id : 특정요소를 딱 집어서 선택. 중복사용 안됨
+            const class_alter = document.getElementsByClassName("no") //class : 여러요소 동시 선택. 중복사용 가능
+            //getElementByTagName name : 데이터 식별자. 서버로 데이터 보낼때 택배송장 이름
+            // document.querySelector(), querySelectorAll() 
+            id_alter.style.background = "aqua"
+            for (let el of class_alter) // for ... of 문. 하나씩 뽑는거
+                el.style.background = "yellow"
+        }
+        //querySelector로 가져올 수 있는 것들 (기본적으로 css문법 따름)
+
+        // 아이디 선택: #을 붙입니다.
+
+        // document.querySelector("#alter")
+
+        // 클래스 선택: .을 붙입니다.
+
+        // document.querySelector(".no")
+
+        // 태그 선택: 이름만 적습니다.
+
+        // document.querySelector("div")
+
+        // 속성 선택: 대괄호[]를 씁니다. (태그의 name 속성을 잡을 때 아주 유용해요!)
+
+        // document.querySelector("[name='user_id']")
+
+        // 복합 선택: CSS처럼 정밀하게 타격 가능합니다.
+
+        // document.querySelector("div.no > span") (div 태그 중 클래스가 no인 요소 바로 밑의 span)
+        function query_change(color) {
+            // querySelectorAll은 forEach를 바로 쓸 수 있어 아주 편합니다!
+            document.querySelectorAll(".no").forEach(el => {
+                el.style.color = color;
+            });
+        }
+        let check = true;
+        function changeText(tag) {
+            let pTag = document.getElementById(tag)
+            pTag.innerHTML = check ? "<em>수정된내용</em>" : "<strong>나는 홍길동입니다</strong>"
+            check = !check
+        }
+        // body내용을 읽고 고치기. onload없이 그냥 있으면 오류남. body읽기전에 ide태그를 찾았기 때문.
+        window.onload = function(){
+            let pTag = document.getElementById("ide")
+            pTag.innerHTML = 'pTag 내용을 읽었음'
+        }
+    </script>
+</head>
+<body>
+    <h2 id="alter">하이</h2>
+    <h5 class="no">아니</h5>
+    <h5 class="no">그게</h5>
+    <button onclick="change()">체인지</button>
+    <button onclick="query_change('red')">빨강</button>
+    <button onclick="query_change('aqua')">파랑</button>
+
+    <hr>
+    <p id="ide"><strong>나는 홍길동입니다</strong></p>
+    <hr>
+    <button onclick="changeText('ide')">기울임</button>
+    <!--
+    let pTag = document.getElementById("ide") 한다음에
+    pTag.innerHTML 하면 <strong>부터 내용 전부나옴
+    pTag.innerText 하면 텍스트 부분만 나옴
+    -->
+</body>
+</html>

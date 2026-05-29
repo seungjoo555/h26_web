@@ -1,0 +1,160 @@
+12. 브라우저 객체 모델(BOM)
+1) BOM(Browser Object Model)
+- 웹 브라우저와 관련된 객체의 집합
+- 객체 모델 종류: window(최상위), location, navigator, history, screen, document
+- DOM(Document Object Model) 으로 통합해서 칭하기도 함
+- 정확히는 자바스크립트가 아닌 웹브라우저가 제공하는 기능
+
+2) window 객체
+- 다른 BOM 객체의 상위 개념
+- alert(), prompt() 등 많은 메소드를 가지고 있음
+- var 키워드로 선언한 일반 변수도 window 객체의 속성이 됨
+- window 객체 생성 메소드: open(URL, name, features, replaced)
+*객체 생성시 생성한 객체를 반환하기 때문에 변수에 입력해서 자유롭게 수정 가능
+ex. var newWin = window.open();
+newWin.document. // 좌측의 형태로 객체 사용 가능
+
+- 매개변수
+URL : HTML 페이지 URL
+name : 윈도우 간 통신에 사용하는 이름
+features : 윈도우 형태 옵션
+replaced : 히스토리 리스트 옵션
+
+- 윈도우 객체 생성 예시
+window.open('https://www.google.com', 'child', 'width=500', 'height=300', true);
+
+- 윈도우 형태 옵션
+height : 새 윈도우의 높이
+width : 새 윈도우의 너비
+location : 주소 입력창 유무
+menubar : 메뉴 유무
+resizable : 화면 크기 조절 가능 여부
+status : 상태 표시줄 유무
+toolbar : 툴바 유무
+left: 왼쪽 기준 팝업 위치 지정
+top: 상단 기준 팝업 위치 지정
+scrollbars: 스크롤바 유무
+fullscreen: 풀스크린 출력
+channelmode: 채널모드 출력
+*픽셀값 혹은 yes, no, 1, 0으로 값 입력 가능
+
+- window 객체의 기본 메소드
+moveBy(x, y) : 윈도우의 위치를 상대적으로 이동
+moveTo(x, y) : 윈도우의 위치를 절대적으로 이동
+resizeBy(x, y) : 윈도우의 크기를 상대적으로 지정
+resizeTo(x, y) : 윈도우의 크기를 절대적으로 지정
+scrollBy(x, y) : 윈도우 스크롤의 위치를 상대적으로 이동
+scrollTo(x, y) : 윈도우 스크롤의 위치를 절대적으로 이동
+focus() : 윈도우에 초점 맞춤
+blur() : 윈도우에 맞춘 초점 제거
+close() : 윈도우 닫음
+
+- window.onload : 윈도우 객체 로드 완료시 실행되는 객체
+- 사용 예시
+window.onload = function () {};
+
+3) screen 객체
+- 웹브라우저 화면이 아닌 운영체제 화면의 속성을 갖는 객체
+- screen 객체의 속성
+width : 화면의 너비
+height : 화면의 높이
+availWidth : 실제 화면에서 사용 가능한 너비
+availHeight : 실제 화면에서 사용 가능한 높이
+colorDepth : 사용 가능한 색상 수
+pixelDepth : 한 픽셀당 비트 수
+
+4) location 객체
+- 웹브라우저의 주소 표시줄과 관련된 객체
+- location 객체는 프로토콜의 종류, 호스트 명, 문서 위치 등의 정보가 있음
+- location 객체의 속성
+href : 문서의 URL 주소
+host : 호스트 이름과 포트번호 // localhost:30763
+hostname : 호스트 이름 // localhost
+port : 포트 번호 // 30763
+pathname : 디렉토리 경로 // /a/index.html
+hash : 앵커 이름(#~) // #beta
+search : 요청 매개변수 // ?param=10
+protocol : 프로토콜 종류  // http:
+
+- location 객체의 메소드
+assign(link) : 현재 위치를 이동
+reload() : 새로고침
+replace(link) : 현재 위치를 이동(뒤로가기 사용 불가)
+
+5) navigator 객체
+- 웹페이지를 실행 중인 브라우저에 대한 정보가 담긴 객체
+- navigator 객체의 속성
+appCodeName : 브라우저의 코드 이름
+appName : 브라우저의 이름
+appVersion : 브라우저의 버전
+platform : 사용 중인 운영체제의 시스템 환경
+userAgent : 웹 브라우저 전체 정보
+
+
+
+자바스크립트에서 변수를 만들면 최상위 객체의 속성으로 등록
+최상위 객체인 전역 객체(Global Object)의 프로퍼티(property)가 됩니다
+a = 10, let a = 10, var a = 10
+- window.a
+
+
+자바스크립트에서 호이스팅(Hoisting)은 선언문이 스코프 최상단으로 끌어올려지는 현상입니다. 
+var는 선언과 동시에 undefined로 초기화되어 선언 전 접근 가능하지만, 
+let은 호이스팅되나 초기화되지 않아 TDZ(Temporal Dead Zone)에 빠져 참조 에러(ReferenceError)가 발생합니다
+
+
+CSR (Client Side Rendering)
+CSR 설명
+말 그대로 클라이언트가 렌더링을 맡아서 하는 방식. 
+여기서 말하는 클라이언트는 브라우저를 말한다. 
+서버에서 받은 데이터를 클라이언트인 브라우저가 화면에 그린다. 
+바로 렌더링 가능한 HTML을 서버에서 보여줘 바로 화면에 띄우는게 가능한 SSR 과 달리 
+HTML 파싱부터 JS 읽기까지 브라우저에서 하기때문에 처음에 화면을 띄우는 데 시간이 좀 걸린다.
+
+
+SSR(Server Side Rendering)
+SSR 설명
+서버사이드렌더링의 약자이다. 
+말 그대로 서버쪽에서 렌더링을 하여 화면을 보여주는 방식을 말한다. 
+서버로부터 완전하게 만들어진 HTML 파일을 받아와 화면을 그리기 때문에 첫 화면 로딩 속도가 빠르다.
+
+
+
+
+
+MPA방식에서 -> SPA방식으로
+
+Multi Page Application. 
+여러 페이지로 구성된 전통적인 웹 어플리케이션의 형태로, 
+사용자의 요청마다 새로운 페이지를 서버에서 불러와 브라우저에 표시한다. 
+
+Single Page Application. 
+즉, 사용자와의 상호작용을 위해 단일 HTML 페이지를 로딩하고, 
+추가 데이터는 동적으로 불러와서 페이지를 새로 고치지 않고 갱신하는 형태의 어플리케이션이다.
+
+
+window
+-Location
+-History
+-Screen
+-Document -*EventHandler*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

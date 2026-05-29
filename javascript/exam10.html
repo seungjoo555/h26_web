@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div class="alter1">가나다라마바사</div>
+    <div class="alter1">가나다라마바사</div>
+    <div class="alter1">가나다라마바사</div>
+    <div class="alter1">가나다라마바사</div>
+    <div class="alter1">가나다라마바사</div>
+    <div class="alter2">가나다라마바사</div>
+    <div class="alter2">가나다라마바사</div>
+    <div class="alter2">가나다라마바사</div>
+    <div class="alter2">가나다라마바사</div>
+    <div class="alter2">가나다라마바사</div>
+    <div class="alter3">가나다라마바사</div>
+    <div class="alter3">가나다라마바사</div>
+    <div class="alter3">가나다라마바사</div>
+    <div class="alter3">가나다라마바사</div>
+    <div class="alter3">가나다라마바사</div>
+    <div class="alter4">가나다라마바사</div>
+    <div class="alter4">가나다라마바사</div>
+    <div class="alter4">가나다라마바사</div>
+    <div class="alter4">가나다라마바사</div>
+    <div class="alter4">가나다라마바사</div>
+    <div class="alter5">가나다라마바사</div>
+    <div class="alter5">가나다라마바사</div>
+    <div class="alter5">가나다라마바사</div>
+    <div class="alter5">가나다라마바사</div>
+    <div class="alter5">가나다라마바사</div>
+    <div class="alter6">가나다라마바사</div>
+    <div class="alter6">가나다라마바사</div>
+    <div class="alter6">가나다라마바사</div>
+    <div class="alter6">가나다라마바사</div>
+    <div class="alter6">가나다라마바사</div>
+    <div class="alter7">가나다라마바사</div>
+    <div class="alter7">가나다라마바사</div>
+    <div class="alter7">가나다라마바사</div>
+    <div class="alter7">가나다라마바사</div>
+    <div class="alter7">가나다라마바사</div>
+    <button onclick=toggleAutoChange()>abcd</button>
+    <h1 id="aich">변해라 쇽쇽</h1>
+    <button onclick="change1('red')">red</button>
+    <button onclick="change1('blue')">blue</button>
+    <button onclick="change1('green')">green</button>
+    <button onclick="change1('black')">black</button>
+    <button onclick="change1('white')">white</button>
+    <script>
+        let check = true
+        function change(){
+            const alter1 = document.getElementsByClassName("alter1");
+            const alter2 = document.getElementsByClassName("alter2");
+            const alter3 = document.querySelectorAll("div.alter3");
+            const alter4 = document.querySelectorAll("div.alter4");
+            const alter5 = document.querySelectorAll("div.alter5");
+            const alter6 = document.querySelectorAll("div.alter6");
+            const alter7 = document.querySelectorAll("div.alter7");
+            Array.from(alter1).forEach(el => {
+                el.style.background = check ? "aqua":"black"
+                el.style.color = check ? "red" : "teal"
+            });
+            Array.from(alter2).forEach(el => {
+                el.style.background = check ? "white":"pink"
+                el.style.color = check ? "blue" : "black"
+            });
+            Array.from(alter3).forEach(el => {
+                el.style.background = check ? "purple":"yellow"
+                el.style.color = check ? "white" : "blue"
+            });
+            Array.from(alter4).forEach(el => {
+                el.style.background = check ? "orange":"white"
+                el.style.color = check ? "teal" : "skyblue"
+            });
+            Array.from(alter5).forEach(el => {
+                el.style.background = check ? "green":"fuchsia"
+                el.style.color = check ? "silver" : "naby"
+            });
+            Array.from(alter6).forEach(el => {
+                el.style.background = check ? "bule":"marron"
+                el.style.color = check ? "purple" : "skyblue"
+            });
+            Array.from(alter7).forEach(el => {
+                el.style.background = check ? "gray":"lime"
+                el.style.color = check ? "aqua" : "silver"
+            });
+            check = !check;
+        }
+        function change1(colors){
+            const alt = document.getElementById("aich");
+            alt.addEventListener()
+            alt.style.color = colors;
+        }
+        let a = 3, b = 4;
+        let sum = (num1, num2) => num1 + num2;
+        document.write(sum(a,b));
+
+        let timer = null; // 타이머를 담을 변수
+        function toggleAutoChange() {
+            if (timer === null) {
+                // 1. 타이머가 없으면 실행 (0.5초 간격)
+                timer = setInterval(change, 50);
+                console.log("자동 시작");
+            } else {
+                // 2. 타이머가 있으면 중지
+                clearInterval(timer);
+                timer = null;
+                console.log("자동 중지");
+            }
+        }
+    </script>
+</body>
+</html>

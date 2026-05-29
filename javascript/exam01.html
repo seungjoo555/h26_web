@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script>
+        let data = 10
+        data || alert(`data: ${data}`) // OR 연산 -> data가 true이면 alert 실행 안함
+        data && alert(`data: ${data}`) // AND 연산 -> data가 true이면 alert 실행
+
+        // let number = 0
+        let number = 22
+        number = number || 0 // number에 값이 없으면 0을 할당
+        console.log(`number: ${number}`) // undefined
+
+
+        document.write('<h1>첫번째</h1>');
+        console.log('나도 남긴다...');
+        let num = 10;
+        num = 20;
+        console.log(num, typeof num);
+
+        num = 14
+        msg = '홀수'
+        if(num % 2 == 0){
+            msg = '짝수'
+        }
+        console.log('num = ' + num + ' ' + msg + '다')
+        console.log(`num = ${num} ${msg}다`)
+        console.log(5 == '5')
+        console.log(5 === '5') // 타입 비교
+
+        num = 15
+        msg = '홀수'
+        if(num % 2 == 0){
+            msg = '짝수'
+        }
+        console.log('num = ' + num + ' ' + msg + '다');
+
+        /*
+        document.write('<h1>첫번째<h2/>')
+        console.log('ㅇㅇㅇ') // 개발자 도구 콘솔창에 출력
+        let num = 10
+        num = 20
+        console.log(num, typeof num)
+        let msg = '홀수'
+        if (num%2==0) {
+            msg = '짝수'
+        }
+        console.log(`num = ${num} ${msg}다`) // 백틱방식. $ 붙여야됨
+        let data = 10
+        data || alert(`data = ${data}`) // 단축평가. 
+        data && alert(`data = ${data}`)
+        let number
+        number = number || 0
+        */
+    </script>
+</head>
+<body>
+    <h2>hello</h1>
+    <script>
+        document.write('<h3>세번째</h3>')
+    </script>
+</body>
+</html>

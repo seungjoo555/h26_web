@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시글 상세 조회</title>
+    <style>
+        /* 중앙 이미지 스타일 (처음엔 숨김) */
+        #result-image {
+            display: none; /* 스크립트로 보여줄 때 사용 */
+            
+            /* 1. 크기 조절 */
+            width: 90%;          /* 화면 너비의 90% 차지 */
+            max-width: 500px;   /* 최대 크기를 1200px에서 1600px로 확장 */
+            height: auto;        /* 비율 유지 */
+
+            /* 2. 중앙 정렬 */
+            margin: 0 auto;      /* 상하 0, 좌우 자동(Auto)으로 중앙 배치 */
+
+            /* 기존 스타일 유지 */
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div id="main-btn" class="container">
+        <header class="post-header">
+            <h1 class="post-title">HTML과 CSS만으로 깔끔한 게시판 만들기</h1>
+            <div class="post-meta">
+                <span><strong>작성자:</strong> 김제미니</span>
+                <span><strong>작성일:</strong> 2026-05-08</span>
+                <span><strong>조회수:</strong> 1,234</span>
+            </div>
+        </header>
+        <hr>
+        <article class="post-content">
+            <p>안녕하세요! 오늘은 웹 디자인의 기초인 HTML과 CSS를 활용하여 게시판 상세 페이지를 디자인해보겠습니다.</p>
+            <p>조회 페이지에서 가장 중요한 것은 <strong>가독성</strong>입니다. 여백(Padding/Margin)을 충분히 활용하고, 글꼴 크기를 적절하게 조절하여 사용자가 글을 읽는 데 피로감을 느끼지 않게 하는 것이 핵심입니다.</p>
+            <p>아래 CSS 코드를 확인하여 디자인을 완성해 보세요!</p>
+        </article>
+
+        <div class="button-group">
+            <button class="btn btn-list" onclick="activateMagic()">목록으로</button>
+            <div class="right-buttons">
+                <button class="btn btn-edit">수정</button>
+                <button class="btn btn-delete">삭제</button>
+            </div>
+        </div>
+    </div>
+    <img id="result-image" src="../image/abcd.png" alt="결과 이미지">
+
+    <audio id="magic-sound">
+        <source src="../sound/비명.mp3" type="audio/mpeg">
+    </audio>
+    <script>
+        function activateMagic() {
+            const img = document.getElementById('result-image');
+            const sound = document.getElementById('magic-sound');
+            const btn = document.getElementById('main-btn');
+
+            // 1. 소리 즉시 재생
+            //sound.currentTime = 0;
+            //sound.play();
+
+            // 2. 버튼 확 사라지게 하기
+            btn.style.display = 'none';
+
+            // 3. 이미지 즉시 나타나게 하기
+            img.style.display = 'block';
+            // 4. [추가] 2초(2000ms) 후에 이미지 교체하기
+            setTimeout(function() {
+                // 여기에 바뀔 이미지의 경로를 넣으세요
+                img.src = "../image/mad_dog.jpg" 
+                
+                // (선택사항) 이미지가 바뀔 때 효과를 주고 싶다면
+                img.style.transition = "all 0.5s";
+                img.style.transform = "scale(1.1) rotate(5deg)"; 
+            }, 1500);
+        }
+    </script>
+</body>
+</html>

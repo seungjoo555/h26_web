@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>후기 작성 페이지</title>
+    </head>
+    <body>
+        <div>
+            <h1>영화 후기 작성하기</h1>
+            <p>관람하신 영화에 대한 솔직한 후기를 남겨주세요.</p>
+        </div>
+        <hr>
+        <div>
+            <form>
+                <span>
+                    <p>
+                        <label for="movie-select">영화 선택:</label>
+                        <select id="movie-select" name="movie_title" required>
+                            <option value="">-- 영화를 선택하세요 --</option>
+                            <option value="spiderman">프로젝트 헤일메리</option>
+                            <option value="demonslayer">쇼생크 탈출</option>
+                        </select>
+                    </p>
+                </span>
+                <span>
+                    <p>
+                        <label for="user-name">작성자:</label>
+                        <input type="text" id="user-name" name="user_name" placeholder="성함을 입력하세요" required>
+                    </p>
+                </span>
+                <span>
+                    <p>
+                        <label for="watch-date">관람 날짜:</label>
+                        <input type="date" id="watch-date" name="watch_date">
+                    </p>
+                </span>
+                <div>
+                    <span>별점 :</span>
+                    <input type="radio" id="star5" name="rating" value="5" /><label for="star5" title="5 stars">5점</label>
+                    <input type="radio" id="star4" name="rating" value="4" /><label for="star4" title="4 stars">4점</label>
+                    <input type="radio" id="star3" name="rating" value="3" /><label for="star3" title="3 stars">3점</label>
+                    <input type="radio" id="star2" name="rating" value="2" /><label for="star2" title="2 stars">2점</label>
+                    <input type="radio" id="star1" name="rating" value="1" /><label for="star1" title="1 stars">1점</label>
+                </div>
+                <span>
+                    <p>
+                        <label for="review-text">후기 내용:</label><br>
+                        <textarea id="review-text" name="review_content" rows="10" cols="50" placeholder="내용을 입력해주세요."></textarea>
+                    </p>
+                </span>
+                <span>
+                    <p>
+                        <button type="submit">후기 등록</button>
+                        <button type="reset">다시 쓰기</button>
+                    </p>
+                </span>
+            </form>
+        </div>
+        <hr>
+        <p>
+            <a href="../index.html">메인 화면(index.html)으로 돌아가기</a>
+        </p>
+    </body>
+</html>

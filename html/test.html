@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>매력적인 인터랙티브 버튼</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f2f5;
+            font-family: 'Pretendard', sans-serif;
+            overflow: hidden;
+        }
+
+        /* 버튼 스타일 */
+        .magic-button {
+            padding: 15px 40px;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(110, 142, 251, 0.3);
+            transition: transform 0.2s;
+            z-index: 10;
+        }
+
+        .magic-button:hover {
+            transform: scale(1.05);
+        }
+
+        /* 중앙 이미지 스타일 (처음엔 숨김) */
+        #result-image {
+            display: none; /* 처음에는 공간조차 차지하지 않음 */
+            max-width: 500px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <button id="main-btn" class="magic-button" onclick="activateMagic()">여기를 눌러보세요!</button>
+
+    <img id="result-image" src="../image/귀신사진.png" alt="결과 이미지">
+
+    <audio id="magic-sound">
+        <source src="../sound/비명.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        function activateMagic() {
+            const img = document.getElementById('result-image');
+            const sound = document.getElementById('magic-sound');
+            const btn = document.getElementById('main-btn');
+
+            // 1. 소리 즉시 재생
+            sound.currentTime = 0;
+            sound.play();
+
+            // 2. 버튼 확 사라지게 하기
+            btn.style.display = 'none';
+
+            // 3. 이미지 즉시 나타나게 하기
+            img.style.display = 'block';
+            // 4. [추가] 2초(2000ms) 후에 이미지 교체하기
+            setTimeout(function() {
+                // 여기에 바뀔 이미지의 경로를 넣으세요
+                img.src = "../image/mad_dog.jpg" 
+                
+                // (선택사항) 이미지가 바뀔 때 효과를 주고 싶다면
+                img.style.transition = "all 0.5s";
+                img.style.transform = "scale(1.1)"; 
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        let a1 = [0, 1, 2, 3, 4];
+        let a2 = new Array(9, 8, 7 ,6,5);
+        let a3 = a1.filter(function(a){
+            return a % 2 == 0
+        });
+
+        document.write(`a1 = [${a1}]<br>`);
+        document.write(`a2 = [${a2}]<br>`);
+        document.write(`a3 = [${a3}]<br>`);
+        
+        let person = {
+            name: "cho",
+            age: 23,
+            langs : ['python', 'html', 'javascript'],
+            info : function() {
+                document.write("myLanguage : " + this.langs + "<br>");
+            },
+            intro : function() {
+                document.write("My name: " + this.name + ", age: " + this.age + "<br>");
+            }
+        };
+
+        person.info();
+        person.intro();
+
+        let p = new Object()
+        p.name = '홍'
+        p.info = function() {
+            document.write("My name : " + this.name + "<br>");
+        }
+
+        p.info();
+
+        function Person1(name, age) {
+            this.name = name,
+            this.age = age,
+            this.info = function(){
+                document.write("My name: " + this.name + ", age: " + this.age + "<hr>");
+            }
+        };
+
+        let person1 = new Person1("함수", 23);
+        let person2 = new Person1("function", 26);
+
+        person1.info();
+        person2.info();
+
+        class Person2 {
+            constructor(name, age){
+                this.name = name;
+                this.age = age;
+            }
+            info(){
+                document.write("My name: " + this.name + ", age: " + this.age + "<br>")
+            }
+        }
+
+        let personClass = new Person2("class", 50);
+        personClass.info();
+
+    </script>
+</body>
+</html>

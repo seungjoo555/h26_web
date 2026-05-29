@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>JS 서바이버즈 - 카메라 고정 & 멀티샷 시스템</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <style>
+        body { margin: 0; background-color: #111; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; color: #fff; font-family: monospace; }
+        #upgrade-ui { display: none; position: absolute; background: rgba(0,0,0,0.85); border: 2px solid #fff; padding: 20px; border-radius: 10px; text-align: center; user-select: none; z-index: 100; }
+        #upgrade-ui h2 { color: #f1c40f; margin-top: 0; }
+        .upgrade-card { display: inline-block; background: #333; border: 2px solid #555; width: 200px; margin: 10px; padding: 15px; cursor: pointer; transition: background 0.2s; border-radius: 5px; }
+        .upgrade-card:hover { background: #555; border-color: #f1c40f; }
+        .upgrade-icon { font-size: 40px; margin-bottom: 10px; }
+        .upgrade-name { font-weight: bold; font-size: 18px; margin-bottom: 5px; }
+        .upgrade-desc { font-size: 14px; color: #ccc; }
+    </style>
+</head>
+<body>
+
+<div id="upgrade-ui">
+    <h2>LEVEL UP!</h2>
+    <p>새로운 힘을 선택하세요.</p>
+    <div id="upgrade-choices"></div>
+</div>
+
+<script>
+    const config = {
+        type: Phaser.AUTO,
+        width: 1200, 
+        height: 900,
+        backgroundColor: '#2d3436', 
+        physics: {
+            default: 'arcade',
+            arcade: { debug: false }
+        },
+        scene: { preload: preload, create: create, update: update }
+    };
+
+    const game = new Phaser.Game(config);
+
+    let player;
+    let cursors, WASD;
+    let enemies, bullets, gems;
+    // 🛠 자석 및 회복 아이템 그룹 변수 추가
+    let magnets, heals;
+    
+    let lastFired = 0;
+    let score = 0, level = 1, exp = 0, nextLevelExp = 5;
+    let isGameOver = false;
+
+    let playerHp = 5;
+    let isPlayerInvincible = false;
+
+    let playerSkills = {
+        magicBolt: 1,  
+        fireRing: 0,   
+        speedBoost: 0  
+    };
+
+    let playerDamage = 1;
+    let fireRingGroup;
+    let uiText, expBar;
+    const upgradeUI = document.getElementById('upgrade-ui');
+    const upgradeChoices = document.getElementById('upgrade-choices');
+
+    function preload() {
+        // 본인 html 파일과 같은 폴더에 이미지 파일들을 넣었을 때 기준
+        this.load.image('playerImg', './image/hero.png');
+        this.load.image('enemyImg', './image/mad_dog.jpg');
+    }
+
+    function create() {
+        this.physics.world.setBounds(0, 0, 4000, 4000);
+
+        const grid = this.add.grid(2000, 2000, 4000, 4000, 64, 64, 0x2d3436, 1, 0x34495e, 0.3);
+
+        // createTexture(this, 'playerText', 'circle', 32, 0x2ecc71);   
+        // createTexture(this, 'enemyText', 'rect', 24, 0xe74c3c);     
+        createTexture(this, 'bulletText', 'circle', 12, 0xf1c40f);   
+        createTexture(this, 'gemText', 'gem', 16, 0x00d2d3);         
+        createTexture(this, 'fireRingText', 'circle', 20, 0xe67e22); 
+        // 🛠 자석(보라색 말굽 모양) 및 회복(분홍색 십자가 모양) 텍스처 생성
+        createTexture(this, 'magnetText', 'magnet', 18, 0x9b59b6); 
+        createTexture(this, 'healText', 'cross', 18, 0xff7675);
+
+        player = this.physics.add.sprite(2000, 2000, 'playerImg');
+        player.setDisplaySize(32, 32);
+        player.setCollideWorldBounds(true); 
+        updatePlayerSpeed();
+
+        this.cameras.main.setBounds(0, 0, 4000, 4000); 
+        this.cameras.main.startFollow(player, true, 0.1, 0.1); 
+
+        enemies = this.physics.add.group();
+        bullets = this.physics.add.group();
+        gems = this.physics.add.group();
+        fireRingGroup = this.physics.add.group();
+        // 🛠 아이템 물리 그룹 생성
+        magnets = this.physics.add.group();
+        heals = this.physics.add.group();
+
+        cursors = this.input.keyboard.createCursorKeys();
+        WASD = this.input.keyboard.addKeys({
+            W: Phaser.Input.Keyboard.KeyCodes.W, A: Phaser.Input.Keyboard.KeyCodes.A,
+            S: Phaser.Input.Keyboard.KeyCodes.S, D: Phaser.Input.Keyboard.KeyCodes.D
+        });
+
+        this.physics.add.overlap(bullets, enemies, handleBulletHit, null, this);
+        this.physics.add.overlap(fireRingGroup, enemies, handleRingHit, null, this);
+        this.physics.add.overlap(player, gems, collectGem, null, this);
+        this.physics.add.overlap(player, enemies, handlePlayerHit, null, this);
+        // 🛠 플레이어와 아이템 간의 충돌(Overlap) 설정
+        this.physics.add.overlap(player, magnets, collectMagnet, null, this);
+        this.physics.add.overlap(player, heals, collectHeal, null, this);
+
+        this.time.addEvent({ delay: 1000, callback: spawnEnemy, callbackScope: this, loop: true });
+
+        uiText = this.add.text(20, 45, 'LV: 1 | HP: 5/5 | KILLS: 0', { fontSize: '20px', fill: '#fff' });
+        uiText.setScrollFactor(0); 
+        
+        expBar = this.add.graphics();
+        expBar.setScrollFactor(0); 
+        drawExpBar();
+
+        updateFireRing.call(this); 
+    }
+
+    function update(time) {
+        if (isGameOver || this.scene.isPaused()) return; 
+
+        player.setVelocity(0);
+        if (cursors.left.isDown || WASD.A.isDown) player.setVelocityX(-player.speed);
+        else if (cursors.right.isDown || WASD.D.isDown) player.setVelocityX(player.speed);
+        if (cursors.up.isDown || WASD.W.isDown) player.setVelocityY(-player.speed);
+        else if (cursors.down.isDown || WASD.S.isDown) player.setVelocityY(player.speed);
+
+        enemies.getChildren().forEach(enemy => {
+            this.physics.moveToObject(enemy, player, 60);
+            if (enemy.hpBar) {
+                enemy.hpBar.x = enemy.x - 15; 
+                enemy.hpBar.y = enemy.y - 12; 
+            }
+        });
+
+        // 🛠 자석 활성화 시 맵의 모든 보석이 플레이어에게 끌려오도록 구현
+        gems.getChildren().forEach(gem => {
+            if (gem.isAttracted) {
+                this.physics.moveToObject(gem, player, 600); // 빠른 속도로 추적
+            }
+        });
+
+        if (playerSkills.magicBolt > 0 && time > lastFired) {
+            let closestEnemy = getClosestEnemy();
+            if (closestEnemy) {
+                fireBullet.call(this, closestEnemy);
+                let currentAttackSpeed = Math.max(200, 1000 - (playerSkills.magicBolt * 50));
+                lastFired = time + currentAttackSpeed;
+            }
+        }
+
+        if (playerSkills.fireRing > 0) {
+            let orbitalSpeed = 0.005 + (playerSkills.fireRing * 0.001);
+            let angle = time * orbitalSpeed;
+            let radius = 70 + (playerSkills.fireRing * 5);
+
+            fireRingGroup.getChildren().forEach((orb, index) => {
+                let orbAngle = angle + (index * (Math.PI * 2 / fireRingGroup.getLength()));
+                orb.x = player.x + Math.cos(orbAngle) * radius;
+                orb.y = player.y + Math.sin(orbAngle) * radius;
+            });
+        }
+    }
+
+    function getClosestEnemy() {
+        let closest = null; let minDist = 999999;
+        enemies.getChildren().forEach(enemy => {
+            let dist = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
+            if (dist < minDist) { minDist = dist; closest = enemy; }
+        });
+        return closest;
+    }
+
+    function fireBullet(target) {
+        let bulletCount = 1 + Math.floor((playerSkills.magicBolt - 1) / 2);
+        let baseAngle = Phaser.Math.Angle.Between(player.x, player.y, target.x, target.y);
+        let spreadAngle = Phaser.Math.DegToRad(15); 
+
+        for (let i = 0; i < bulletCount; i++) {
+            let bullet = bullets.create(player.x, player.y, 'bulletText');
+            if (bullet) {
+                let finalAngle = baseAngle + (i - (bulletCount - 1) / 2) * spreadAngle;
+                this.physics.velocityFromRotation(finalAngle, 400, bullet.body.velocity);
+                bullet.setCollideWorldBounds(false);
+            }
+        }
+    }
+
+    function spawnEnemy() {
+        if (isGameOver) return;
+
+        let timeElapsed = this.time.now; 
+        let spawnCount = 1 + Math.floor(timeElapsed / 60000);
+
+        for (let i = 0; i < spawnCount; i++) {
+            let angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+            let distance = 700; 
+            let x = player.x + Math.cos(angle) * distance;
+            let y = player.y + Math.sin(angle) * distance;
+
+            if(x > 0 && x < 4000 && y > 0 && y < 4000) {
+                let enemy = enemies.create(x, y, 'enemyImg');
+                enemy.setDisplaySize(24, 24);
+                let maxHp = 3 + (Math.floor(timeElapsed / 60000) * 2);
+                enemy.maxHp = maxHp;
+                enemy.hp = maxHp;
+                enemy.hpBar = this.add.graphics();
+                drawEnemyHpBar(enemy);
+            }
+        }
+    }
+
+    function drawEnemyHpBar(enemy) {
+        enemy.hpBar.clear();
+        if (enemy.hp >= enemy.maxHp) return;
+        enemy.hpBar.fillStyle(0x000000, 0.8);
+        enemy.hpBar.fillRect(0, 0, 30, 5);
+        let hpRatio = enemy.hp / enemy.maxHp;
+        enemy.hpBar.fillStyle(0xff0000, 1);
+        enemy.hpBar.fillRect(0, 0, 30 * hpRatio, 5);
+    }
+
+    function handleBulletHit(bullet, enemy) {
+        bullet.destroy(); 
+        damageEnemy(enemy, playerDamage); 
+    }
+
+    function handleRingHit(fireOrb, enemy) {
+        if (enemy.isRingInvincible) return;
+        damageEnemy(enemy, playerDamage * 1.5); 
+        enemy.isRingInvincible = true;
+        this.time.delayedCall(300, () => {
+            if (enemy.active) enemy.isRingInvincible = false;
+        });
+    }
+
+    function damageEnemy(enemy, damage) {
+        enemy.hp -= damage;      
+        drawEnemyHpBar(enemy);   
+
+        enemy.setTint(0xffffff);
+        game.scene.scenes[0].time.delayedCall(100, () => {
+            if (enemy.active) enemy.clearTint();
+        });
+
+        if (enemy.hp <= 0) {
+            if (enemy.hpBar) enemy.hpBar.destroy(); 
+            
+            // 🛠 [수정] 낮은 확률(각각 5%)로 특수 아이템 드롭 시스템 추가
+            let dropRoll = Phaser.Math.Between(1, 100);
+            if (dropRoll <= 1) {
+                magnets.create(enemy.x, enemy.y, 'magnetText'); // 1~5일 때 자석 생성
+            } else if (dropRoll <= 2) {
+                heals.create(enemy.x, enemy.y, 'healText');   // 6~10일 때 회복템 생성
+            }
+            else{
+                gems.create(enemy.x, enemy.y, 'gemText'); 
+            }
+
+            enemy.destroy();                                         
+            score++;                                                 
+            updateUI();
+        }
+    }
+
+    function handlePlayerHit(playerSprite, enemy) {
+        if (isPlayerInvincible || isGameOver) return;
+
+        playerHp--; 
+        updateUI();
+
+        isPlayerInvincible = true;
+        playerSprite.setTint(0xff0000);
+
+        this.time.delayedCall(500, () => {
+            if (!isGameOver) {
+                playerSprite.clearTint();
+                isPlayerInvincible = false;
+            }
+        });
+
+        if (playerHp <= 0) {
+            gameOver.call(this);
+        }
+    }
+
+    function collectGem(playerSprite, gem) {
+        gem.destroy(); 
+        
+        let expGained = Phaser.Math.Between(1, 5); 
+        exp += expGained;
+
+        let leveledUp = false;
+        while (exp >= nextLevelExp) {
+            exp -= nextLevelExp;
+            level++;
+            nextLevelExp = Math.floor(nextLevelExp * 1.5);
+            leveledUp = true;
+        }
+
+        updateUI(); 
+        drawExpBar(); 
+
+        if (leveledUp) {
+            showUpgradeUI(); 
+        }
+    }
+
+    // 🛠 자석 아이템 획득 시 처리 함수
+    function collectMagnet(playerSprite, magnet) {
+        magnet.destroy();
+        // 현재 필드에 존재하는 모든 보석을 추적 상태로 변경
+        gems.getChildren().forEach(gem => {
+            gem.isAttracted = true;
+        });
+    }
+
+    // 🛠 회복 아이템 획득 시 처리 함수
+    function collectHeal(playerSprite, heal) {
+        heal.destroy();
+        if (playerHp < 5) {
+            playerHp++; // 체력 1 회복 (최대 5)
+            updateUI();
+        }
+    }
+
+    function showUpgradeUI() {
+        const scene = game.scene.scenes[0];
+        scene.scene.pause(); 
+
+        upgradeChoices.innerHTML = ''; 
+        
+        const allUpgrades = [
+            { id: 'magicBolt', name: '매직 볼트', icon: '✨', desc: `홀수 레벨 달성 시 발사되는 총알 개수가 늘어납니다! (현재 Lv.${playerSkills.magicBolt})` },
+            { id: 'fireRing', name: '파이어 링', icon: '🔥', desc: playerSkills.fireRing === 0 ? '주변을 도는 불덩이를 소환합니다.' : `불덩이가 강해지고 속도가 증가합니다. (현재 Lv.${playerSkills.fireRing})` },
+            { id: 'speedBoost', name: '신속의 장화', icon: '👟', desc: `이동 속도가 10% 증가합니다. (현재 Lv.${playerSkills.speedBoost})` },
+            { id: 'damageUp', name: '무기의 힘', icon: '⚔️', desc: `모든 무기의 기본 데미지가 +1 증가합니다. (현재 데미지: ${playerDamage})` }
+        ];
+        
+        Phaser.Utils.Array.Shuffle(allUpgrades).forEach(upgrade => {
+            const card = document.createElement('div');
+            card.className = 'upgrade-card';
+            card.innerHTML = `
+                <div class="upgrade-icon">${upgrade.icon}</div>
+                <div class="upgrade-name">${upgrade.name}</div>
+                <div class="upgrade-desc">${upgrade.desc}</div>
+            `;
+            
+            card.onclick = () => {
+                applyUpgrade(upgrade.id); 
+                upgradeUI.style.display = 'none'; 
+                scene.scene.resume(); 
+            };
+            upgradeChoices.appendChild(card);
+        });
+
+        upgradeUI.style.display = 'block'; 
+    }
+
+    function applyUpgrade(skillId) {
+        if (skillId === 'damageUp') {
+            playerDamage += 1; 
+            return;
+        }
+        playerSkills[skillId]++; 
+        if (skillId === 'fireRing') updateFireRing.call(game.scene.scenes[0]); 
+        else if (skillId === 'speedBoost') updatePlayerSpeed(); 
+    }
+
+    function updateFireRing() {
+        if (playerSkills.fireRing === 0) return;
+        fireRingGroup.clear(true, true); 
+        const orbCount = 1 + Math.floor(playerSkills.fireRing / 2); 
+        for (let i = 0; i < orbCount; i++) {
+            let orb = fireRingGroup.create(player.x, player.y, 'fireRingText');
+            orb.setBodySize(20, 20);
+        }
+    }
+
+    function updatePlayerSpeed() {
+        player.speed = 150 * (1 + (playerSkills.speedBoost * 0.1)); 
+    }
+
+    function updateUI() { uiText.setText(`LV: ${level} | HP: ${playerHp}/5 | KILLS: ${score}`); }
+    
+    function drawExpBar() {
+        expBar.clear(); expBar.fillStyle(0x555555, 1); expBar.fillRect(20, 20, 1160, 15);
+        let progress = exp / nextLevelExp; expBar.fillStyle(0x00d2d3, 1); expBar.fillRect(20, 20, 1160 * progress, 15);
+    }
+
+    function gameOver() {
+        isGameOver = true;
+        this.physics.pause();
+        enemies.getChildren().forEach(enemy => { if (enemy.hpBar) enemy.hpBar.destroy(); });
+        player.setActive(false).setTint(0xff0000);
+        
+        let goText = this.add.text(600, 450, 'GAME OVER', { fontSize: '64px', fill: '#e74c3c' }).setOrigin(0.5);
+        goText.setScrollFactor(0);
+    }
+
+    function createTexture(scene, key, type, size, color) {
+        const g = scene.make.graphics({ add: false }); g.fillStyle(color, 1);
+        if (type === 'circle') g.fillCircle(size/2, size/2, size/2);
+        else if (type === 'rect') g.fillRect(0, 0, size, size);
+        else if (type === 'gem') { g.fillTriangle(size/2, 0, 0, size/2, size, size/2); g.fillTriangle(0, size/2, size, size/2, size/2, size); }
+        // 🛠 십자가(회복 아이템 모양) 그리기 공식 추가
+        else if (type === 'cross') { g.fillRect(size*0.35, 0, size*0.3, size); g.fillRect(0, size*0.35, size, size*0.3); }
+        // 🛠 말굽 자석(자석 아이템 모양) 그리기 공식 추가
+        else if (type === 'magnet') { g.fillRect(0, 0, size*0.3, size); g.fillRect(size*0.7, 0, size*0.3, size); g.fillRect(0, size*0.7, size, size*0.3); }
+        g.generateTexture(key, size, size);
+    }
+</script>
+
+</body>
+</html>

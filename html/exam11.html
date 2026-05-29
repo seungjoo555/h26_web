@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<!--
+여러 줄의 입력 요소를 생성할 때는 input 태그가 아닌 textarea 태그를 사용합니다. 
+웹 사이트에서 글을 작성할 때 사용하는 입력 요소는 대부분 textarea 태그로 생성합니다.
+
+textarea 태그는 input 태그와는 다르게 닫는 태그가 있습니다. 
+그래서 input 태그로 생성한 입력 요소의 초깃값은 value 속성으로 정의하지만, 
+textarea 태그로 생성한 여러 줄의 입력 요소는 콘텐츠 영역에 초깃값을 정의합니다.
+-->
+<body>
+    <form action="#" method="post">
+        <fieldset>
+            <legend>블로그 글쓰기</legend>
+            <p>
+                <label for="title">제목
+                    <input type="text" id="title" name="title">
+                </label>
+            </p>
+            <p>
+                <label for="desc">내용
+                    <textarea id="desc" name="desc" style="width: 500px; height: 500px">초기값</textarea>
+                </label>
+            </p>
+        </fieldset>
+    </form>
+</body>
+</html>

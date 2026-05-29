@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body { text-align: center;}
+        #inputField {
+            padding: 10px;
+            font-size: 16px;
+            outline: none;
+            border: 2px solid #3498db;
+        }
+        #inputField:focus { border: 2px dotted #e74c3c;}
+    </style>
+</head>
+<body>
+    <h4>페이지 로딩</h4>
+    <input id="inputField" type="text" placeholder="클릭하세요!">
+    <div onclick="alert('div')">
+        <span onclick="alert('span')">
+            <h2 id="h2" onclick="alert('h2')">click</h2>
+        </span>
+    </div>
+    <img id="loadingImage" src="../image/milk.jpg">
+    <script>
+        h2.addEventListener("click", rotate, true);
+
+        inputField.addEventListener("focus", function() {
+            inputField.placeholder = "입력하세요";
+        });
+
+        inputField.addEventListener("blur", function() {
+            inputField.placeholder = "클릭하세요";
+        });
+
+
+    </script>
+</body>
+</html>
