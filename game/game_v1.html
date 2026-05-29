@@ -2,10 +2,12 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>JS 서바이버즈 - 카메라 고정 & 멀티샷 시스템</title>
+    <title>Crazy Dog 서바이벌</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
+        /* 화면 중앙 정렬 및 배경 스타일 설정 */
         body { margin: 0; background-color: #111; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; color: #fff; font-family: monospace; }
+        /* 레벨업 시 나타나는 HTML UI 내부 스타일 */
         #upgrade-ui { display: none; position: absolute; background: rgba(0,0,0,0.85); border: 2px solid #fff; padding: 20px; border-radius: 10px; text-align: center; user-select: none; z-index: 100; }
         #upgrade-ui h2 { color: #f1c40f; margin-top: 0; }
         .upgrade-card { display: inline-block; background: #333; border: 2px solid #555; width: 200px; margin: 10px; padding: 15px; cursor: pointer; transition: background 0.2s; border-radius: 5px; }
@@ -24,145 +26,179 @@
 </div>
 
 <script>
+    // ==========================================
+    // 1. 게임 기본 설정 (Configuration)
+    // ==========================================
     const config = {
-        type: Phaser.AUTO,
-        width: 1200, 
-        height: 900,
-        backgroundColor: '#2d3436', 
+        type: Phaser.AUTO,         // 브라우저 환경에 따라 WebGL 또는 Canvas 자동 선택
+        width: 1200,                // 게임 화면 가로 크기
+        height: 900,               // 게임 화면 세로 크기
+        backgroundColor: '#2d3436', // 게임 배경색
         physics: {
-            default: 'arcade',
-            arcade: { debug: false }
+            default: 'arcade',     // 아케이드 물리 엔진 사용 (충돌 및 이동 계산)
+            arcade: { debug: false } // true 설정 시 충돌 영역(히트박스)이 선으로 표시됨
         },
-        scene: { preload: preload, create: create, update: update }
+        scene: { preload: preload, create: create, update: update } // 씬 생명주기 함수 연결
     };
 
+    // 설정값을 바탕으로 Phaser 게임 인스턴스 생성
     const game = new Phaser.Game(config);
 
-    let player;
-    let cursors, WASD;
-    let enemies, bullets, gems;
-    // 🛠 자석 및 회복 아이템 그룹 변수 추가
-    let magnets, heals;
+    // ==========================================
+    // 2. 전역 변수 선언
+    // ==========================================
+    let player;                   // 플레이어 오브젝트
+    let cursors, WASD;            // 키보드 입력 제어 변수
+    let enemies, bullets, gems;   // 적, 총알, 보석 그룹 변수
+    let magnets, heals;           // 자석, 회복 아이템 그룹 변수
     
-    let lastFired = 0;
-    let score = 0, level = 1, exp = 0, nextLevelExp = 5;
-    let isGameOver = false;
+    let lastFired = 0;            // 마지막 총알 발사 시간 기록용 변수
+    let score = 0, level = 1, exp = 0, nextLevelExp = 5; // 레벨 및 경험치 시스템 변수
+    let isGameOver = false;       // 게임 오버 여부 플래그
 
-    let playerHp = 5;
-    let isPlayerInvincible = false;
+    let playerHp = 5;             // 플레이어 기본 체력
+    let isPlayerInvincible = false; // 플레이어 무적 상태 여부 (피격 후 쿨타임용)
 
+    // 플레이어의 스킬 레벨 상태 관리 객체
     let playerSkills = {
-        magicBolt: 1,  
-        fireRing: 0,   
-        speedBoost: 0  
+        magicBolt: 1,  // 매직 볼트 (기본 무기)
+        fireRing: 0,   // 파이어 링 (주변 공전 무기)
+        speedBoost: 0  // 신속의 장화 (이동 속도 버프)
     };
 
-    let playerDamage = 1;
-    let fireRingGroup;
-    let uiText, expBar;
+    let playerDamage = 1;         // 플레이어 기본 데미지
+    let fireRingGroup;            // 파이어 링 오브젝트 그룹
+    let uiText, expBar;           // 상단 UI 텍스트 및 경험치 바 그래픽 객체
+    
+    // HTML UI 조작을 위한 DOM 객체 가져오기
     const upgradeUI = document.getElementById('upgrade-ui');
     const upgradeChoices = document.getElementById('upgrade-choices');
 
+    // ==========================================
+    // 3. Preload : 이미지 등 외부 에셋 로드
+    // ==========================================
     function preload() {
-        // 본인 html 파일과 같은 폴더에 이미지 파일들을 넣었을 때 기준
+        // 플레이어 캐릭터 및 적 캐릭터 이미지 로드 (경로 주의)
         this.load.image('playerImg', './image/hero.png');
         this.load.image('enemyImg', './image/mad_dog.jpg');
     }
 
+    // ==========================================
+    // 4. Create : 게임 오브젝트 및 시스템 초기 생성
+    // ==========================================
     function create() {
+        // 전체 월드(맵) 크기 설정 (4000x4000 크기의 넓은 전장)
         this.physics.world.setBounds(0, 0, 4000, 4000);
 
+        // 배경 그리드(바둑판) 생성하여 공간감 부여
         const grid = this.add.grid(2000, 2000, 4000, 4000, 64, 64, 0x2d3436, 1, 0x34495e, 0.3);
 
-        // createTexture(this, 'playerText', 'circle', 32, 0x2ecc71);   
-        // createTexture(this, 'enemyText', 'rect', 24, 0xe74c3c);     
+        // 그래픽 코드를 이용해 실시간으로 아이템/투사체 텍스처(이미지) 생성
         createTexture(this, 'bulletText', 'circle', 12, 0xf1c40f);   
         createTexture(this, 'gemText', 'gem', 16, 0x00d2d3);         
         createTexture(this, 'fireRingText', 'circle', 20, 0xe67e22); 
-        // 🛠 자석(보라색 말굽 모양) 및 회복(분홍색 십자가 모양) 텍스처 생성
         createTexture(this, 'magnetText', 'magnet', 18, 0x9b59b6); 
         createTexture(this, 'healText', 'cross', 18, 0xff7675);
 
+        // 플레이어 스프라이트 생성 및 초기화
         player = this.physics.add.sprite(2000, 2000, 'playerImg');
-        player.setDisplaySize(32, 32);
-        player.setCollideWorldBounds(true); 
-        updatePlayerSpeed();
+        player.setDisplaySize(32, 32);      // 화면에 표시될 크기 조절
+        player.setCollideWorldBounds(true); // 맵 밖으로 나가지 못하게 제한
+        updatePlayerSpeed();                // 초기 이동 속도 계산
 
-        this.cameras.main.setBounds(0, 0, 4000, 4000); 
-        this.cameras.main.startFollow(player, true, 0.1, 0.1); 
+        // 카메라 시스템 설정
+        this.cameras.main.setBounds(0, 0, 4000, 4000); // 카메라가 움직일 수 있는 한계선
+        this.cameras.main.startFollow(player, true, 0.1, 0.1); // 플레이어를 부드럽게 추적
 
+        // 각 오브젝트들의 물리 그룹 생성 (메모리 관리 및 충돌 체크 용이)
         enemies = this.physics.add.group();
         bullets = this.physics.add.group();
         gems = this.physics.add.group();
         fireRingGroup = this.physics.add.group();
-        // 🛠 아이템 물리 그룹 생성
         magnets = this.physics.add.group();
         heals = this.physics.add.group();
 
+        // 키보드 제어 입력을 위한 키 등록 (방향키 & WASD 두 가지 지원)
         cursors = this.input.keyboard.createCursorKeys();
         WASD = this.input.keyboard.addKeys({
             W: Phaser.Input.Keyboard.KeyCodes.W, A: Phaser.Input.Keyboard.KeyCodes.A,
             S: Phaser.Input.Keyboard.KeyCodes.S, D: Phaser.Input.Keyboard.KeyCodes.D
         });
 
-        this.physics.add.overlap(bullets, enemies, handleBulletHit, null, this);
-        this.physics.add.overlap(fireRingGroup, enemies, handleRingHit, null, this);
-        this.physics.add.overlap(player, gems, collectGem, null, this);
-        this.physics.add.overlap(player, enemies, handlePlayerHit, null, this);
-        // 🛠 플레이어와 아이템 간의 충돌(Overlap) 설정
-        this.physics.add.overlap(player, magnets, collectMagnet, null, this);
-        this.physics.add.overlap(player, heals, collectHeal, null, this);
+        // 오브젝트 간 겹침(충돌) 감지 이벤트 리스너 등록
+        this.physics.add.overlap(bullets, enemies, handleBulletHit, null, this);     // 총알과 적
+        this.physics.add.overlap(fireRingGroup, enemies, handleRingHit, null, this); // 파이어링과 적
+        this.physics.add.overlap(player, gems, collectGem, null, this);             // 플레이어와 보석
+        this.physics.add.overlap(player, enemies, handlePlayerHit, null, this);     // 플레이어와 적(피격)
+        this.physics.add.overlap(player, magnets, collectMagnet, null, this);       // 플레이어와 자석
+        this.physics.add.overlap(player, heals, collectHeal, null, this);           // 플레이어와 회복 아이템
 
+        // 1초(1000ms)마다 주기적으로 적을 생성하는 타이머 이벤트 등록
         this.time.addEvent({ delay: 1000, callback: spawnEnemy, callbackScope: this, loop: true });
 
+        // 화면 고정 상단 UI 텍스트 생성 (레벨, 체력, 처치 수)
         uiText = this.add.text(20, 45, 'LV: 1 | HP: 5/5 | KILLS: 0', { fontSize: '20px', fill: '#fff' });
-        uiText.setScrollFactor(0); 
+        uiText.setScrollFactor(0); // 카메라가 움직여도 스크린 상단 고정
         
+        // 경험치 바를 그릴 그래픽 객체 생성 및 고정
         expBar = this.add.graphics();
         expBar.setScrollFactor(0); 
         drawExpBar();
 
+        // 파이어 링 초기 상태 업데이트
         updateFireRing.call(this); 
     }
 
+    // ==========================================
+    // 5. Update : 매 프레임마다 무한 반복 실행 (핵심 로직)
+    // ==========================================
     function update(time) {
+        // 게임오버 상태이거나 레벨업 등으로 일시정지 상태면 아래 로직을 수행하지 않음
         if (isGameOver || this.scene.isPaused()) return; 
 
+        // [플레이어 이동 제어] 매 프레임 속도를 0으로 리셋 후 입력 값에 따라 이동 속도 부여
         player.setVelocity(0);
         if (cursors.left.isDown || WASD.A.isDown) player.setVelocityX(-player.speed);
         else if (cursors.right.isDown || WASD.D.isDown) player.setVelocityX(player.speed);
         if (cursors.up.isDown || WASD.W.isDown) player.setVelocityY(-player.speed);
         else if (cursors.down.isDown || WASD.S.isDown) player.setVelocityY(player.speed);
 
+        // [적 인공지능] 모든 적이 실시간으로 플레이어 위치를 향해 추적하도록 설정
         enemies.getChildren().forEach(enemy => {
-            this.physics.moveToObject(enemy, player, 60);
+            this.physics.moveToObject(enemy, player, 60); // 속도 60으로 플레이어 이동방향 추적
             if (enemy.hpBar) {
+                // 적 머리 위에 실시간으로 체력바가 따라다니도록 좌표 동기화
                 enemy.hpBar.x = enemy.x - 15; 
                 enemy.hpBar.y = enemy.y - 12; 
             }
         });
 
-        // 🛠 자석 활성화 시 맵의 모든 보석이 플레이어에게 끌려오도록 구현
+        // [자석 아이템 효과] 자석을 먹어 자석 상태 활성화된 보석이 있다면 빠른 속도로 플레이어에게 유도
         gems.getChildren().forEach(gem => {
             if (gem.isAttracted) {
-                this.physics.moveToObject(gem, player, 600); // 빠른 속도로 추적
+                this.physics.moveToObject(gem, player, 600); // 600의 빠른 속도로 보석이 끌려옴
             }
         });
 
+        // [무기 시스템 1 : 매직 볼트 자동 발사]
         if (playerSkills.magicBolt > 0 && time > lastFired) {
-            let closestEnemy = getClosestEnemy();
+            let closestEnemy = getClosestEnemy(); // 가장 가까운 적 찾기
             if (closestEnemy) {
-                fireBullet.call(this, closestEnemy);
+                fireBullet.call(this, closestEnemy); // 투사체 발사
+                // 스킬 레벨이 오를수록 연사 속도(쿨타임)가 빨라짐 (최소 200ms 제한)
                 let currentAttackSpeed = Math.max(200, 1000 - (playerSkills.magicBolt * 50));
                 lastFired = time + currentAttackSpeed;
             }
         }
 
+        // [무기 시스템 2 : 파이어 링 공전 구현]
         if (playerSkills.fireRing > 0) {
+            // 스킬 레벨에 비례하여 회전 속도 증가
             let orbitalSpeed = 0.005 + (playerSkills.fireRing * 0.001);
-            let angle = time * orbitalSpeed;
-            let radius = 70 + (playerSkills.fireRing * 5);
+            let angle = time * orbitalSpeed; // 시간에 따른 회전 각도 계산
+            let radius = 70 + (playerSkills.fireRing * 5); // 공전 반지름 거리 계산
 
+            // 생성된 불덩이들을 플레이어 주변으로 원형 정렬 및 공전 배치
             fireRingGroup.getChildren().forEach((orb, index) => {
                 let orbAngle = angle + (index * (Math.PI * 2 / fireRingGroup.getLength()));
                 orb.x = player.x + Math.cos(orbAngle) * radius;
@@ -171,6 +207,11 @@
         }
     }
 
+    // ==========================================
+    // 6. 커스텀 함수 및 시스템 로직
+    // ==========================================
+
+    // 맵 내의 모든 적 중에서 플레이어와 가장 가까운 거리에 있는 적 반환
     function getClosestEnemy() {
         let closest = null; let minDist = 999999;
         enemies.getChildren().forEach(enemy => {
@@ -180,107 +221,131 @@
         return closest;
     }
 
+    // 매직 볼트 발사 함수 (레벨에 따른 멀티샷/부채꼴 발사 분기 처리)
     function fireBullet(target) {
+        // 2레벨당 총알이 1개씩 추가됨 (1Lv: 1발, 3Lv: 2발, 5Lv: 3발...)
         let bulletCount = 1 + Math.floor((playerSkills.magicBolt - 1) / 2);
-        let baseAngle = Phaser.Math.Angle.Between(player.x, player.y, target.x, target.y);
-        let spreadAngle = Phaser.Math.DegToRad(15); 
+        let baseAngle = Phaser.Math.Angle.Between(player.x, player.y, target.x, target.y); // 적을 향한 기본 각도
+        let spreadAngle = Phaser.Math.DegToRad(15); // 총알 사이의 간격 각도 (15도)
 
         for (let i = 0; i < bulletCount; i++) {
             let bullet = bullets.create(player.x, player.y, 'bulletText');
             if (bullet) {
+                // 부채꼴 형태로 총알 각도 분산 계산
                 let finalAngle = baseAngle + (i - (bulletCount - 1) / 2) * spreadAngle;
+                // 해당 각도 방향으로 총알에 물리적 속도(400) 부여
                 this.physics.velocityFromRotation(finalAngle, 400, bullet.body.velocity);
-                bullet.setCollideWorldBounds(false);
+                bullet.setCollideWorldBounds(false); // 총알은 맵 경계 밖으로 나가면 자연스럽게 사라지도록 설정
             }
         }
     }
 
+    // 적 스폰 함수 (게임 진행 시간에 맞춰 생성수와 체력 증가)
     function spawnEnemy() {
         if (isGameOver) return;
 
         let timeElapsed = this.time.now; 
-        let spawnCount = 1 + Math.floor(timeElapsed / 60000);
+        let spawnCount = 1 + Math.floor(timeElapsed / 60000); // 1분(60초)마다 스폰량 증가
 
         for (let i = 0; i < spawnCount; i++) {
+            // 플레이어 주변 360도 무작위 방향, 거리 700 지점에 스폰 위치 계산 (화면 밖)
             let angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
             let distance = 700; 
             let x = player.x + Math.cos(angle) * distance;
             let y = player.y + Math.sin(angle) * distance;
 
+            // 월드 맵 범위 안일 때만 몹 생성
             if(x > 0 && x < 4000 && y > 0 && y < 4000) {
                 let enemy = enemies.create(x, y, 'enemyImg');
                 enemy.setDisplaySize(24, 24);
+                
+                // 시간 경과에 따라 몹 맷집(최대 체력) 증가
                 let maxHp = 3 + (Math.floor(timeElapsed / 60000) * 2);
                 enemy.maxHp = maxHp;
                 enemy.hp = maxHp;
+                
+                // 각 적 개별 체력바 그래픽 객체 부여 후 드로잉
                 enemy.hpBar = this.add.graphics();
                 drawEnemyHpBar(enemy);
             }
         }
     }
 
+    // 적 머리 위 체력바 드로잉 함수
     function drawEnemyHpBar(enemy) {
         enemy.hpBar.clear();
-        if (enemy.hp >= enemy.maxHp) return;
-        enemy.hpBar.fillStyle(0x000000, 0.8);
+        if (enemy.hp >= enemy.maxHp) return; // 체력이 꽉 차있을 땐 체력바를 숨김
+        
+        enemy.hpBar.fillStyle(0x000000, 0.8); // 배경 검은 바
         enemy.hpBar.fillRect(0, 0, 30, 5);
+        
         let hpRatio = enemy.hp / enemy.maxHp;
-        enemy.hpBar.fillStyle(0xff0000, 1);
+        enemy.hpBar.fillStyle(0xff0000, 1);   // 현재 체력 빨간 바
         enemy.hpBar.fillRect(0, 0, 30 * hpRatio, 5);
     }
 
+    // 총알과 적 충돌 시 처리 함수
     function handleBulletHit(bullet, enemy) {
-        bullet.destroy(); 
-        damageEnemy(enemy, playerDamage); 
+        bullet.destroy(); // 총알 소멸
+        damageEnemy(enemy, playerDamage); // 플레이어 공격력만큼 데미지 가함
     }
 
+    // 파이어 링과 적 충돌 시 처리 함수
     function handleRingHit(fireOrb, enemy) {
-        if (enemy.isRingInvincible) return;
-        damageEnemy(enemy, playerDamage * 1.5); 
-        enemy.isRingInvincible = true;
+        if (enemy.isRingInvincible) return; // 파이어 링 다단히트 무적 판정 중이면 무시
+        
+        damageEnemy(enemy, playerDamage * 1.5); // 파이어 링은 1.5배의 강한 데미지
+        enemy.isRingInvincible = true;          // 초고속 연속 타격 방지를 위한 개별 무적 활성화
+        
+        // 0.3초 후 파이어 링에 대한 타격 무적 해제
         this.time.delayedCall(300, () => {
             if (enemy.active) enemy.isRingInvincible = false;
         });
     }
 
+    // 적 데미지 처리 및 처치 시 보상 드롭 시스템
     function damageEnemy(enemy, damage) {
         enemy.hp -= damage;      
         drawEnemyHpBar(enemy);   
 
+        // 타격 피격 시 흰색으로 반짝이는 이펙트 처리
         enemy.setTint(0xffffff);
         game.scene.scenes[0].time.delayedCall(100, () => {
             if (enemy.active) enemy.clearTint();
         });
 
+        // 적 사망 시 처리
         if (enemy.hp <= 0) {
-            if (enemy.hpBar) enemy.hpBar.destroy(); 
+            if (enemy.hpBar) enemy.hpBar.destroy(); // 체력바 객체 제거
             
-            // 🛠 [수정] 낮은 확률(각각 5%)로 특수 아이템 드롭 시스템 추가
+            // 확률적 아이템 드롭 굴림 (1~100 주사위)
             let dropRoll = Phaser.Math.Between(1, 100);
             if (dropRoll <= 1) {
-                magnets.create(enemy.x, enemy.y, 'magnetText'); // 1~5일 때 자석 생성
+                magnets.create(enemy.x, enemy.y, 'magnetText'); // 1% 확률로 자석 생성
             } else if (dropRoll <= 2) {
-                heals.create(enemy.x, enemy.y, 'healText');   // 6~10일 때 회복템 생성
-            }
-            else{
-                gems.create(enemy.x, enemy.y, 'gemText'); 
+                heals.create(enemy.x, enemy.y, 'healText');     // 1% 확률로 회복약 생성
+            } else {
+                gems.create(enemy.x, enemy.y, 'gemText');       // 나머지 확률은 일반 경험치 보석 생성
             }
 
-            enemy.destroy();                                         
-            score++;                                                 
-            updateUI();
+            enemy.destroy(); // 적 캐릭터 오브젝트 제거
+            score++;         // 처치 수(스코어) 증가
+            updateUI();      // UI 상단 정보 갱신
         }
     }
 
+    // 플레이어 피격 처리 함수
     function handlePlayerHit(playerSprite, enemy) {
+        // 이미 무적 상태거나 게임오버면 충돌 계산 패스
         if (isPlayerInvincible || isGameOver) return;
 
-        playerHp--; 
+        playerHp--; // 체력 감소
         updateUI();
 
-        isPlayerInvincible = true;
-        playerSprite.setTint(0xff0000);
+        isPlayerInvincible = true; // 무적 타이머 온
+        playerSprite.setTint(0xff0000); // 피격 시 플레이어 빨갛게 변경
 
+        // 0.5초 후 플레이어 무적 상태 및 붉은 색상 해제
         this.time.delayedCall(500, () => {
             if (!isGameOver) {
                 playerSprite.clearTint();
@@ -288,57 +353,63 @@
             }
         });
 
+        // 체력이 다하면 게임 오버
         if (playerHp <= 0) {
             gameOver.call(this);
         }
     }
 
+    // 보석(경험치) 획득 처리 및 레벨업 체크
     function collectGem(playerSprite, gem) {
-        gem.destroy(); 
+        gem.destroy(); // 먹은 보석 제거
         
-        let expGained = Phaser.Math.Between(1, 5); 
+        let expGained = Phaser.Math.Between(1, 5); // 보석당 1~5 무작위 경험치 부여
         exp += expGained;
 
         let leveledUp = false;
+        // 경험치가 요구치를 초과할 때 반복 수행 (다중 레벨업 대응)
         while (exp >= nextLevelExp) {
             exp -= nextLevelExp;
             level++;
-            nextLevelExp = Math.floor(nextLevelExp * 1.5);
+            nextLevelExp = Math.floor(nextLevelExp * 1.5); // 다음 레벨 요구 경험치 1.5배 증가
             leveledUp = true;
         }
 
         updateUI(); 
         drawExpBar(); 
 
+        // 레벨업 성공 시 선택지 UI 띄움
         if (leveledUp) {
             showUpgradeUI(); 
         }
     }
 
-    // 🛠 자석 아이템 획득 시 처리 함수
+    // 자석 아이템 획득 시 처리 함수
     function collectMagnet(playerSprite, magnet) {
         magnet.destroy();
-        // 현재 필드에 존재하는 모든 보석을 추적 상태로 변경
+        // 필드에 드롭되어 있는 모든 보석의 유도 자석 활성화 플래그를 true로 변경
         gems.getChildren().forEach(gem => {
             gem.isAttracted = true;
         });
     }
 
-    // 🛠 회복 아이템 획득 시 처리 함수
+    // 회복 아이템 획득 시 처리 함수
     function collectHeal(playerSprite, heal) {
         heal.destroy();
         if (playerHp < 5) {
-            playerHp++; // 체력 1 회복 (최대 5)
+            playerHp++; // 최대 체력(5) 이하일 때만 체력 1 보충
             updateUI();
         }
     }
 
+    // 레벨업 업그레이드 UI 생성 및 게임 일시정지
     function showUpgradeUI() {
         const scene = game.scene.scenes[0];
-        scene.scene.pause(); 
+        scene.scene.pause(); // 레벨업 카드를 고르는 동안 Phaser 엔진 업데이트 일시정지
 
-        upgradeChoices.innerHTML = ''; 
+        upgradeChoices.innerHTML = ''; // 이전 선택지 HTML 카드들 초기화 비우기
         
+        // 전체 등장 가능한 업그레이드 품목 데이터 배열
         const allUpgrades = [
             { id: 'magicBolt', name: '매직 볼트', icon: '✨', desc: `홀수 레벨 달성 시 발사되는 총알 개수가 늘어납니다! (현재 Lv.${playerSkills.magicBolt})` },
             { id: 'fireRing', name: '파이어 링', icon: '🔥', desc: playerSkills.fireRing === 0 ? '주변을 도는 불덩이를 소환합니다.' : `불덩이가 강해지고 속도가 증가합니다. (현재 Lv.${playerSkills.fireRing})` },
@@ -346,6 +417,7 @@
             { id: 'damageUp', name: '무기의 힘', icon: '⚔️', desc: `모든 무기의 기본 데미지가 +1 증가합니다. (현재 데미지: ${playerDamage})` }
         ];
         
+        // Phaser 배열 셔플 알고리즘으로 무작위로 카드를 섞어 화면에 배치 (로그라이크 방식)
         Phaser.Utils.Array.Shuffle(allUpgrades).forEach(upgrade => {
             const card = document.createElement('div');
             card.className = 'upgrade-card';
@@ -355,67 +427,103 @@
                 <div class="upgrade-desc">${upgrade.desc}</div>
             `;
             
+            // 카드 클릭 시 스킬 반영 후 UI 닫고 게임 재개
             card.onclick = () => {
                 applyUpgrade(upgrade.id); 
                 upgradeUI.style.display = 'none'; 
-                scene.scene.resume(); 
+                scene.scene.resume(); // 게임 재개
             };
             upgradeChoices.appendChild(card);
         });
 
-        upgradeUI.style.display = 'block'; 
+        upgradeUI.style.display = 'block'; // 감춰져있던 레벨업 대화상자 노출
     }
 
+    // 선택한 업그레이드 능력치/스킬 반영 함수
     function applyUpgrade(skillId) {
         if (skillId === 'damageUp') {
-            playerDamage += 1; 
+            playerDamage += 1; // 기본 무기 공격력 가산
             return;
         }
-        playerSkills[skillId]++; 
+        playerSkills[skillId]++; // 개별 스킬 레벨 1 증가
+        
+        // 스킬 종류에 따른 추가 오브젝트 처리/스피드 공식 재적용
         if (skillId === 'fireRing') updateFireRing.call(game.scene.scenes[0]); 
         else if (skillId === 'speedBoost') updatePlayerSpeed(); 
     }
 
+    // 파이어 링 스킬 레벨 변동에 따른 구체 개수 재구성 함수
     function updateFireRing() {
         if (playerSkills.fireRing === 0) return;
-        fireRingGroup.clear(true, true); 
-        const orbCount = 1 + Math.floor(playerSkills.fireRing / 2); 
+        fireRingGroup.clear(true, true); // 기존에 돌던 불덩이들을 싹 청소한 후 재생성
+        
+        const orbCount = 1 + Math.floor(playerSkills.fireRing / 2); // 레벨 상승에 맞춰 불덩이 개수 증가
         for (let i = 0; i < orbCount; i++) {
             let orb = fireRingGroup.create(player.x, player.y, 'fireRingText');
-            orb.setBodySize(20, 20);
+            orb.setBodySize(20, 20); // 히트박스 영역 조절
         }
     }
 
+    // 이동 속도 버프 공식 계산 함수 (신속의 장화 수치 반영)
     function updatePlayerSpeed() {
-        player.speed = 150 * (1 + (playerSkills.speedBoost * 0.1)); 
+        player.speed = 150 * (1 + (playerSkills.speedBoost * 0.1)); // 레벨당 10%씩 복리/단리 가산
     }
 
+    // 상단 텍스트 정보 UI 문자열 최신화 함수
     function updateUI() { uiText.setText(`LV: ${level} | HP: ${playerHp}/5 | KILLS: ${score}`); }
     
+    // 화면 맨 위 상단 경험치 진행도 바 렌더링 함수
     function drawExpBar() {
-        expBar.clear(); expBar.fillStyle(0x555555, 1); expBar.fillRect(20, 20, 1160, 15);
-        let progress = exp / nextLevelExp; expBar.fillStyle(0x00d2d3, 1); expBar.fillRect(20, 20, 1160 * progress, 15);
+        expBar.clear(); 
+        expBar.fillStyle(0x555555, 1); // 회색 배경 바
+        expBar.fillRect(20, 20, 1160, 15);
+        
+        let progress = exp / nextLevelExp; // 현재 경험치 백분율 비율 계산
+        expBar.fillStyle(0x00d2d3, 1); // 청록색 경험치 충전 바
+        expBar.fillRect(20, 20, 1160 * progress, 15);
     }
 
+    // 체력이 영(0)이 되었을 때 호출되는 게임오버 연출 함수
     function gameOver() {
         isGameOver = true;
-        this.physics.pause();
-        enemies.getChildren().forEach(enemy => { if (enemy.hpBar) enemy.hpBar.destroy(); });
-        player.setActive(false).setTint(0xff0000);
+        this.physics.pause(); // 모든 물리 연산 동결 (이동, 충돌 정지)
         
+        // 필드의 모든 적들 머리 위에 달려있던 체력바 그래픽 메모리 파괴
+        enemies.getChildren().forEach(enemy => { if (enemy.hpBar) enemy.hpBar.destroy(); });
+        player.setActive(false).setTint(0xff0000); // 플레이어 사망 처리(빨간색 틴트 고정)
+        
+        // 화면 정중앙에 대형 GAME OVER 문구 출력
         let goText = this.add.text(600, 450, 'GAME OVER', { fontSize: '64px', fill: '#e74c3c' }).setOrigin(0.5);
-        goText.setScrollFactor(0);
+        goText.setScrollFactor(0); // 카메라 고정
     }
 
+    // ==========================================
+    // 7. Phaser Graphics 기반 텍스처 자체 생성기
+    // ==========================================
     function createTexture(scene, key, type, size, color) {
-        const g = scene.make.graphics({ add: false }); g.fillStyle(color, 1);
-        if (type === 'circle') g.fillCircle(size/2, size/2, size/2);
-        else if (type === 'rect') g.fillRect(0, 0, size, size);
-        else if (type === 'gem') { g.fillTriangle(size/2, 0, 0, size/2, size, size/2); g.fillTriangle(0, size/2, size, size/2, size/2, size); }
-        // 🛠 십자가(회복 아이템 모양) 그리기 공식 추가
-        else if (type === 'cross') { g.fillRect(size*0.35, 0, size*0.3, size); g.fillRect(0, size*0.35, size, size*0.3); }
-        // 🛠 말굽 자석(자석 아이템 모양) 그리기 공식 추가
-        else if (type === 'magnet') { g.fillRect(0, 0, size*0.3, size); g.fillRect(size*0.7, 0, size*0.3, size); g.fillRect(0, size*0.7, size, size*0.3); }
+        const g = scene.make.graphics({ add: false }); 
+        g.fillStyle(color, 1);
+        
+        if (type === 'circle') {
+            g.fillCircle(size/2, size/2, size/2);
+        } else if (type === 'rect') {
+            g.fillRect(0, 0, size, size);
+        } else if (type === 'gem') {
+            // 위아래 삼각형 2개를 맞붙여 다이아몬드(보석) 형태 구현
+            g.fillTriangle(size/2, 0, 0, size/2, size, size/2); 
+            g.fillTriangle(0, size/2, size, size/2, size/2, size); 
+        } else if (type === 'cross') {
+            // 가로 사각형과 세로 사각형을 교차시켜 십자가(힐팩) 구현
+            g.fillRect(size*0.35, 0, size*0.3, size); 
+            g.fillRect(0, size*0.35, size, size*0.3); 
+        } else if (type === 'magnet') {
+            // 왼쪽, 오른쪽, 아래쪽 면을 사각형으로 덧대어 凹 모양(말굽자석) 구현
+            g.fillRect(0, 0, size*0.3, size); 
+            g.fillRect(size*0.7, 0, size*0.3, size); 
+            g.fillRect(0, size*0.7, size, size*0.3); 
+        }
+        
+        // 완성된 도형 그래픽 데이터를 Phaser 내장 이미지 캐시 리스트에 등록 ('key' 이름으로 꺼내 쓰기 가능)
         g.generateTexture(key, size, size);
     }
 </script>
