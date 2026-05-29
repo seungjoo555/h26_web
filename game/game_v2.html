@@ -298,9 +298,9 @@
             if (enemy.hpBar) enemy.hpBar.destroy(); 
             
             let dropRoll = Phaser.Math.Between(1, 100);
-            if (dropRoll <= 2) {
+            if (dropRoll <= 1) {
                 magnets.create(enemy.x, enemy.y, 'magnetText'); 
-            } else if (dropRoll <= 5) {
+            } else if (dropRoll <= 2) {
                 heals.create(enemy.x, enemy.y, 'healText'); 
             } else {
                 gems.create(enemy.x, enemy.y, 'gemText'); 
